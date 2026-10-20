@@ -1,0 +1,168 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Choreograph — Keyframe Animation Studio</title>
+<meta name="description" content="A keyframe animation studio with a draggable timeline, easing curves, live preview and copyable CSS output.">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500&family=Manrope:wght@400;500;600&family=Syne:wght@500;600;700&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="styles.css">
+</head>
+<body>
+<div class="app">
+  <header class="topbar">
+    <div class="brand">
+      <span class="mark"><i></i><i></i><i></i></span>
+      <div>
+        <strong>Choreograph</strong>
+        <small>Keyframe animation studio</small>
+      </div>
+    </div>
+    <div class="top-actions">
+      <label class="preset-picker">Preset
+        <select id="preset"></select>
+      </label>
+      <button id="copy-css" class="primary" type="button">Copy CSS</button>
+    </div>
+  </header>
+
+  <section class="hero">
+    <div>
+      <p class="eyebrow">Time, curve, object</p>
+      <h1>Move with <em>intent.</em></h1>
+      <p class="lede">Build a motion sequence on the timeline, tune the easing, and take the generated CSS with you. No libraries, no export step.</p>
+    </div>
+    <div class="hero-meta">
+      <span id="duration-meta">1.8s sequence</span>
+      <span id="keycount-meta">4 keyframes</span>
+    </div>
+  </section>
+
+  <div class="workspace">
+    <aside class="controls">
+      <div class="panel-head"><span>Playback</span><span>01</span></div>
+      <div class="transport">
+        <button id="play" class="play" type="button"><span id="play-icon">▶</span><span id="play-label">Play</span></button>
+        <button id="restart" class="icon" type="button" aria-label="Restart">↺</button>
+      </div>
+      <label class="scrub-label">Playhead <output id="percent-output">0%</output>
+        <input type="range" id="scrubber" min="0" max="100" step="0.1" value="0">
+      </label>
+      <div class="time-readout"><span id="time-output">0.00s</span><span id="frame-output">frame 0</span></div>
+
+      <div class="panel-head spaced"><span>Settings</span><span>02</span></div>
+      <label class="control">Duration <output id="duration-output">1.8s</output>
+        <input type="range" id="duration" min="0.4" max="4" step="0.1" value="1.8">
+      </label>
+      <label class="check"><input type="checkbox" id="loop" checked> Loop playback</label>
+
+      <div class="panel-head spaced"><span>Object</span><span>03</span></div>
+      <div class="shape-row" id="shape-row">
+        <button type="button" data-shape="square" class="active">Square</button>
+        <button type="button" data-shape="circle">Circle</button>
+        <button type="button" data-shape="card">Card</button>
+      </div>
+      <label class="control">Size <output id="size-output">96px</output>
+        <input type="range" id="size" min="48" max="160" step="2" value="96">
+      </label>
+      <span class="control-label">Colour</span>
+      <div class="color-row" id="color-row">
+        <button type="button" data-color="0" class="active" style="--c:#ff6b45"></button>
+        <button type="button" data-color="1" style="--c:#66e0ff"></button>
+        <button type="button" data-color="2" style="--c:#d5ff5c"></button>
+        <button type="button" data-color="3" style="--c:#f2f0e8"></button>
+        <button type="button" data-color="4" style="--c:#b48cff"></button>
+      </div>
+
+      <div class="panel-head spaced"><span>Easing</span><span>04</span></div>
+      <label class="control">Selected segment
+        <select id="easing">
+          <option value="ease">Ease</option>
+          <option value="linear">Linear</option>
+          <option value="ease-in">Ease in</option>
+          <option value="ease-out">Ease out</option>
+          <option value="ease-in-out">Ease in out</option>
+          <option value="spring">Spring overshoot</option>
+          <option value="smooth">Smooth</option>
+        </select>
+      </label>
+      <div class="curve-card">
+        <svg id="curve" viewBox="0 0 120 80" aria-label="Easing curve preview">
+          <path d="M8 72 C 30 72, 34 8, 112 8" fill="none" stroke="#66e0ff" stroke-width="2"/>
+          <circle cx="8" cy="72" r="2.4" fill="#f2f0e8"/>
+          <circle cx="112" cy="8" r="2.4" fill="#f2f0e8"/>
+        </svg>
+        <span id="curve-label">cubic-bezier(.25, .1, .25, 1)</span>
+      </div>
+    </aside>
+
+    <main class="stage">
+      <div class="stage-head">
+        <div>
+          <span class="eyebrow">Live preview</span>
+          <span class="stage-title" id="stage-title">Square / sequence 01</span>
+        </div>
+        <div class="stage-readout">
+          <strong id="stage-percent">0%</strong>
+          <span id="stage-time">0.00s</span>
+        </div>
+      </div>
+      <div class="stage-canvas" id="stage-canvas">
+        <span class="axis horizontal"></span>
+        <span class="axis vertical"></span>
+        <span class="stage-label top">Motion field</span>
+        <span class="stage-label bottom">1 unit = 1 px</span>
+        <div class="motion-object square" id="motion-object">
+          <span class="object-content" id="object-content"></span>
+        </div>
+      </div>
+      <div class="stage-foot">
+        <span><i class="status-dot"></i><span id="play-state">Paused</span></span>
+        <span id="motion-meta">translate(0px, 0px) scale(1) rotate(0deg)</span>
+      </div>
+
+      <section class="timeline-panel">
+        <div class="timeline-head">
+          <div>
+            <span class="eyebrow">Timeline</span>
+            <span class="timeline-title">Pose tracks</span>
+          </div>
+          <div class="timeline-actions">
+            <button id="add-keyframe" class="ghost" type="button">+ Keyframe</button>
+            <button id="delete-keyframe" class="ghost danger" type="button">Delete</button>
+          </div>
+        </div>
+        <div class="timeline">
+          <div class="ruler" id="ruler"></div>
+          <div class="timeline-grid">
+            <div class="track-labels" id="track-labels"></div>
+            <div class="track-lanes" id="track-lanes">
+              <div class="playhead" id="playhead"><span></span></div>
+            </div>
+          </div>
+        </div>
+      </section>
+    </main>
+
+    <aside class="inspector">
+      <div class="panel-head"><span>Keyframe</span><span id="keyframe-id">01</span></div>
+      <div id="keyframe-body"></div>
+      <div class="code-head">
+        <span>CSS output</span>
+        <button id="download-css" type="button">Download</button>
+      </div>
+      <pre class="code-block" id="code-block"></pre>
+    </aside>
+  </div>
+
+  <footer>
+    <span>Choreograph / keyframe studio</span>
+    <span id="year"></span>
+  </footer>
+</div>
+<div class="toast" id="toast" role="status" aria-live="polite"></div>
+<script src="app.js"></script>
+</body>
+</html>
